@@ -384,7 +384,7 @@ void printValue(Value value) {
     logger(LOG_INFO, "%lld\n", value.value.integer);
     break;
   case VALUE_FLOATING:
-    logger(LOG_INFO, "%lf\n", value.value.floating);
+    logger(LOG_INFO, "%.16lf\n", value.value.floating);
     break;
   case VALUE_STRING:
     // Como você tem length explícito, usa %.*s
