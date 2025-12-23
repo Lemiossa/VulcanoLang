@@ -64,4 +64,5 @@ void arenaDestroy(Arena *arena) {
   arena->buffer = NULL;
   arena->length = 0;
   arena->offset = 0;
+  free(arena);
 }
