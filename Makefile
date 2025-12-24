@@ -3,12 +3,15 @@
 # Licença MIT
 SRCDIR := $(CURDIR)/src
 BUILDDIR := $(CURDIR)/build
+
 OBJDIR := $(BUILDDIR)/obj
 DEPDIR := $(BUILDDIR)/dep
 BINDIR :=$(BUILDDIR)/bin
 
 CC ?= gcc
 CFLAGS := -O2 -g -Wall -Wextra -I $(SRCDIR)
+LIBS := -lm
+FORMATSTYLE := "{BasedOnStyle: Google, UseTab: ForIndentation, IndentWidth: 4, TabWidth: 4}"
 
 TEMPDIRS := $(BUILDDIR) $(OBJDIR) $(DEPDIR) $(BINDIR)
 
@@ -27,31 +30,48 @@ DEP := $(patsubst $(SRCDIR)/%.c,$(DEPDIR)/%.d,$(SOURCE))
 
 TARGET ?= $(BINDIR)/vul
 
-all: $(TEMPDIRS) $(TARGET)
+all: release
 
-debug: CFLAGS := -O0 -g3 -Wall -Wextra -I $(SRCDIR)
-debug: clean
-debug: $(TEMPDIRS) $(TARGET)
+debug: CFLAGS := -O0 -g3 -Wall -Wextra -DDEBUG -I $(SRCDIR)
+debug: $(BUILDDIR)/.debug $(TARGET)
+
+release: CFLAGS := -O2 -g -Wall -Wextra -DNDEBUG -I $(SRCDIR)
+release: $(BUILDDIR)/.release $(TARGET)
 
 clean:
-	rm -rf $(BUILDDIR)
-	find . -type f -name "*.un~" -delete
+	@echo "  RM        $(BUILDDIR)"
+	@rm -rf $(BUILDDIR)
 
 example: $(TARGET)
-	$(TARGET) example.vul
+	@echo "  CAT       $(CURDIR)/example.vul"
+	@cat example.vul
+	@echo "  RUN       $(CURDIR)/example.vul"
+	@$(TARGET) example.vul
 
 format:
-	find . -name "*.c" -o -name "*.h"  | xargs clang-format -i --style=LLVM 
+	@echo "  FORMAT    *.c *.h"
+	@find . -name "*.c" -o -name "*.h"  | xargs clang-format -i --style=$(FORMATSTYLE) 
 
-$(TEMPDIRS):
-	mkdir $@
+$(BUILDDIR)/.debug: 
+	@echo "  DEBUG     BUILD"
+	@if [ -f $(BUILDDIR)/.release ]; then rm -rf $(BUILDDIR); fi
+	@mkdir -p $(BUILDDIR) $(OBJDIR) $(DEPDIR) $(BINDIR)
+	@touch $@
+
+$(BUILDDIR)/.release: 
+	@echo "  RELEASE   BUILD"
+	@if [ -f $(BUILDDIR)/.debug ]; then rm -rf $(BUILDDIR); fi
+	@mkdir -p $(BUILDDIR) $(OBJDIR) $(DEPDIR) $(BINDIR)
+	@touch $@
 
 $(TARGET): $(OBJ) | $(DEPDIR)
-	$(CC) -o $@ $^
+	@echo "  LINK      $(TARGET)"
+	@$(CC) -o $@ $^ $(LIBS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
-	mkdir -p $(dir $@) $(dir $(DEPDIR)/$*.d)
-	$(CC) $(CFLAGS) -MMD -MF $(DEPDIR)/$*.d -c $< -o $@
+	@echo "  CC        $<"
+	@mkdir -p $(dir $@) $(dir $(DEPDIR)/$*.d)
+	@$(CC) $(CFLAGS) -MMD -MF $(DEPDIR)/$*.d -c $< -o $@
 
-.PHONY: all debug clean example format
+.PHONY: all release debug clean example format
 -include $(DEP)

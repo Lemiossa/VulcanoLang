@@ -7,12 +7,12 @@
 #include <stddef.h>
 
 typedef struct Arena {
-  void *buffer;
-  size_t length;
-  size_t offset;
+	void* buffer;
+	size_t length;
+	size_t offset;
 } Arena;
 
-Arena *arenaCreate(size_t initial);
-void *arenaAlloc(Arena *arena, size_t length);
-void arenaReset(Arena *arena);
-void arenaDestroy(Arena *arena);
+Arena* arenaCreate(size_t initial);
+void* arenaAlloc(Arena* arena, size_t length);
+void arenaReset(Arena* arena);
+void arenaDestroy(Arena* arena);

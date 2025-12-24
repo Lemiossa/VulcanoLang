@@ -11,14 +11,14 @@
 
 // Lexer
 typedef struct {
-  const char *content;
-  size_t contentSize;
-  size_t pos;
-  size_t line;
-  size_t column;
+	const char* content;
+	size_t contentSize;
+	size_t pos;
+	size_t line;
+	size_t column;
 } Lexer;
 
-bool lexerValidate(Lexer *l);
-Lexer *lexerCreate(const char *content, size_t contentSize);
-TokenArray lexerTokenize(Lexer *l);
-void lexerDestroy(Lexer *l);
+bool lexerValidate(Lexer* l);
+Lexer* lexerCreate(const char* content, size_t contentSize);
+TokenArray lexerTokenize(Lexer* l);
+void lexerDestroy(Lexer* l);

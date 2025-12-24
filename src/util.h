@@ -8,5 +8,5 @@
 
 typedef enum { LOG_ERROR, LOG_SUCCESS, LOG_WARNING, LOG_INFO } LogLevel;
 
-long fsize(FILE *f);
-int logger(LogLevel level, const char *format, ...);
+long fsize(FILE* f);
+int logger(LogLevel level, const char* format, ...);
