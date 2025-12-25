@@ -24,15 +24,15 @@ void astDump(AstNode *root, int depth) {
 	switch (root->type) {
 	case NODE_PROGRAM: {
 		printf("NODE_PROGRAM: \n");
-		for (size_t i = 0; i < root->data.program.count; i++) {
+		for (size_t i = 0; i < root->data.program.count; i++)
 			astDump(root->data.program.statements[i], depth + 1);
-		}
+
 	} break;
 	case NODE_BLOCK_STATEMENT: {
 		printf("NODE_BLOCK_STATEMENT: \n");
-		for (size_t i = 0; i < root->data.blockStatement.count; i++) {
+		for (size_t i = 0; i < root->data.blockStatement.count; i++)
 			astDump(root->data.blockStatement.statements[i], depth + 1);
-		}
+
 	} break;
 	case NODE_EXPRESSION_STATEMENT: {
 		printf("NODE_EXPRESSION_STATEMENT: \n");
@@ -42,7 +42,7 @@ void astDump(AstNode *root, int depth) {
 		printf("NODE_IF_STATEMENT: \n");
 
 		INDENT(depth + 1);
-		printf("└─CONDITION: \n");
+		printf("CONDITION: \n");
 		astDump(root->data.ifStatement.condition, depth + 2);
 
 		INDENT(depth + 1);
@@ -57,7 +57,7 @@ void astDump(AstNode *root, int depth) {
 		printf("NODE_RETURN_STATEMENT: \n");
 		INDENT(depth + 1);
 		printf("EXPRESSION: \n");
-		astDump(root->data.returnStatement.expression, depth + 2);
+		astDump(root->data.returnStatement.statement, depth + 2);
 	} break;
 	case NODE_VAR_STATEMENT: {
 		printf("NODE_VAR_STATEMENT: \n");
@@ -69,6 +69,25 @@ void astDump(AstNode *root, int depth) {
 		INDENT(depth + 1);
 		printf("EXPRESSION: \n");
 		astDump(root->data.varStatement.expression, depth + 2);
+	} break;
+	case NODE_FN_STATEMENT: {
+		printf("NODE_FN_STATEMENT: \n");
+
+		INDENT(depth + 1);
+		printf("PARAMS: \n");
+		for (size_t i = 0; i < root->data.fnStatement.paramCount; i++)
+			astDump(root->data.fnStatement.params[i], depth + 2);
+
+		INDENT(depth + 1);
+		printf("PARAMCOUNT: %zu\n", root->data.fnStatement.paramCount);
+
+		INDENT(depth + 1);
+		printf("FUNCTIONNAME: \n");
+		astDump(root->data.fnStatement.functionName, depth + 2);
+
+		INDENT(depth + 1);
+		printf("STATEMENT: \n");
+		astDump(root->data.fnStatement.statement, depth + 2);
 	} break;
 	case NODE_NUMBER: {
 		if (!root->data.number.isFloat) {
@@ -103,7 +122,7 @@ void astDump(AstNode *root, int depth) {
 		astDump(root->data.binaryOp.right, depth + 2);
 
 		INDENT(depth + 1);
-		printf("OPERATOR: %d", root->data.binaryOp.operator);
+		printf("OPERATOR: %d", root->data.binaryOp.op);
 	} break;
 
 	case NODE_UNARYOP: {
@@ -113,9 +132,8 @@ void astDump(AstNode *root, int depth) {
 		astDump(root->data.unaryOp.operand, depth + 2);
 
 		INDENT(depth + 1);
-		printf("OPERATOR: %d\n", root->data.unaryOp.operator);
+		printf("OPERATOR: %d\n", root->data.unaryOp.op);
 	} break;
-
 	case NODE_ASSIGNMENT: {
 		printf("NODE_ASSIGNMENT: \n");
 
@@ -126,6 +144,21 @@ void astDump(AstNode *root, int depth) {
 		INDENT(depth + 1);
 		printf("VALUE: \n");
 		astDump(root->data.assigment.value, depth + 2);
+	} break;
+	case NODE_CALL: {
+		printf("NODE_CALL: \n");
+
+		INDENT(depth + 1);
+		printf("CALLER: \n");
+		astDump(root->data.call.callee, depth + 2);
+
+		INDENT(depth + 1);
+		printf("ARGS: \n");
+		for (size_t i = 0; i < root->data.call.argc; i++)
+			astDump(root->data.call.args[i], depth + 2);
+
+		INDENT(depth + 1);
+		printf("ARGC: %zu\n", root->data.call.argc);
 	} break;
 	}
 	printf("\n");
@@ -156,11 +189,17 @@ void astDestroy(AstNode *root) {
 		astDestroy(root->data.ifStatement.elseBranch);
 	} break;
 	case NODE_RETURN_STATEMENT: {
-		astDestroy(root->data.returnStatement.expression);
+		astDestroy(root->data.returnStatement.statement);
 	} break;
 	case NODE_VAR_STATEMENT: {
 		astDestroy(root->data.varStatement.expression);
 		astDestroy(root->data.varStatement.identifier);
+	} break;
+	case NODE_FN_STATEMENT: {
+		for (size_t i = 0; i < root->data.fnStatement.paramCount; i++)
+			astDestroy(root->data.fnStatement.params[i]);
+		astDestroy(root->data.fnStatement.functionName);
+		astDestroy(root->data.fnStatement.statement);
 	} break;
 	case NODE_BINARYOP: {
 		astDestroy(root->data.binaryOp.left);
@@ -172,6 +211,11 @@ void astDestroy(AstNode *root) {
 	case NODE_ASSIGNMENT: {
 		astDestroy(root->data.assigment.target);
 		astDestroy(root->data.assigment.value);
+	} break;
+	case NODE_CALL: {
+		astDestroy(root->data.call.callee);
+		for (size_t i = 0; i < root->data.call.argc; i++)
+			astDestroy(root->data.call.args[i]);
 	} break;
 	default:
 		break;

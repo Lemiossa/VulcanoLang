@@ -76,6 +76,7 @@ static bool match(Parser *p, TokenType type) {
 
 AstNode *parseLiteral(Parser *p);
 AstNode *parsePrimary(Parser *p);
+AstNode *parseCall(Parser *p);
 AstNode *parseUnary(Parser *p);
 AstNode *parseMultiplication(Parser *p);
 AstNode *parseAdition(Parser *p);
@@ -94,6 +95,8 @@ AstNode *parseExpressionStatement(Parser *p);
 AstNode *parseBlockStatement(Parser *p);
 AstNode *parseIfStatement(Parser *p);
 AstNode *parseReturnStatement(Parser *p);
+AstNode *parseFnStatement(Parser *p);
+AstNode *parseWhileStatement(Parser *p);
 
 AstNode *parseStatement(Parser *p);
 
@@ -277,6 +280,7 @@ AstNode *parsePrimary(Parser *p) {
 		if (!node)
 			return NULL;
 
+		node->token = t;
 		node->type = NODE_IDENTIFIER;
 		node->data.identifier.name = t->start;
 		node->data.identifier.length = t->length;
@@ -286,11 +290,55 @@ AstNode *parsePrimary(Parser *p) {
 	return parseLiteral(p);
 }
 
+// Call
+AstNode *parseCall(Parser *p) {
+	AstNode *left = parsePrimary(p);
+
+	while (match(p, TOKEN_LPAREN)) {
+		AstNode **args = NULL;
+		size_t argc = 0;
+		size_t cap = 0;
+
+		if (!check(p, TOKEN_RPAREN)) { // Parametros
+			do {
+				AstNode *arg = parseExpression(p);
+				if (argc >= cap) {
+					cap = cap ? cap * 2 : 4;
+					args = realloc(args, cap * sizeof(AstNode *));
+				}
+
+				args[argc++] = arg;
+			} while (match(p, TOKEN_COMMA));
+		}
+
+		if (!check(p, TOKEN_RPAREN)) {
+			tokenLogger(LOG_ERROR, *(peek(p)),
+			            "Syntax error: Expected ')' after args");
+			return NULL;
+		}
+
+		advance(p);
+
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+		if (!node)
+			return NULL;
+		node->token = left->token;
+		node->type = NODE_CALL;
+		node->data.call.callee = left;
+		node->data.call.args = args;
+		node->data.call.argc = argc;
+
+		left = node;
+	}
+
+	return left;
+}
+
 // Unary
 AstNode *parseUnary(Parser *p) {
 	if (check(p, TOKEN_NOT) || check(p, TOKEN_BIT_NOT) ||
 	    check(p, TOKEN_MINUS) || check(p, TOKEN_PLUS)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseUnary(p);
@@ -298,17 +346,17 @@ AstNode *parseUnary(Parser *p) {
 			return NULL;
 
 		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
-		node->token = operator;
+		node->token = op;
 		if (!node)
 			return NULL;
 
 		node->type = NODE_UNARYOP;
-		node->data.unaryOp.operator = operator->type;
+		node->data.unaryOp.op = op->type;
 		node->data.unaryOp.operand = right;
 		return node;
 	}
 
-	return parsePrimary(p);
+	return parseCall(p);
 }
 
 // Multiplication
@@ -322,7 +370,7 @@ AstNode *parseMultiplication(Parser *p) {
 
 	while (check(p, TOKEN_STAR) || check(p, TOKEN_SLASH) ||
 	       check(p, TOKEN_PERCENT)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseUnary(p);
@@ -330,14 +378,14 @@ AstNode *parseMultiplication(Parser *p) {
 			break;
 
 		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
-		node->token = operator;
+		node->token = op;
 		if (!node)
 			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -354,7 +402,7 @@ AstNode *parseAdition(Parser *p) {
 		return NULL;
 
 	while (check(p, TOKEN_PLUS) || check(p, TOKEN_MINUS)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseMultiplication(p);
@@ -362,14 +410,14 @@ AstNode *parseAdition(Parser *p) {
 			break;
 
 		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
-		node->token = operator;
+		node->token = op;
 		if (!node)
 			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -386,7 +434,7 @@ AstNode *parseShift(Parser *p) {
 		return NULL;
 
 	while (check(p, TOKEN_SHIFT_LEFT) || check(p, TOKEN_SHIFT_RIGHT)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseAdition(p);
@@ -394,14 +442,14 @@ AstNode *parseShift(Parser *p) {
 			break;
 
 		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
-		node->token = operator;
+		node->token = op;
 		if (!node)
 			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -419,7 +467,7 @@ AstNode *parseComparison(Parser *p) {
 
 	while (check(p, TOKEN_LT) || check(p, TOKEN_GT) || check(p, TOKEN_LTE) ||
 	       check(p, TOKEN_GTE)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseShift(p);
@@ -427,14 +475,14 @@ AstNode *parseComparison(Parser *p) {
 			break;
 
 		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
-		node->token = operator;
+		node->token = op;
 		if (!node)
 			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -451,7 +499,7 @@ AstNode *parseEquality(Parser *p) {
 		return NULL;
 
 	while (check(p, TOKEN_EQ) || check(p, TOKEN_NEQ)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseComparison(p);
@@ -459,14 +507,14 @@ AstNode *parseEquality(Parser *p) {
 			break;
 
 		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
-		node->token = operator;
+		node->token = op;
 		if (!node)
 			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -483,7 +531,7 @@ AstNode *parseBitwiseAnd(Parser *p) {
 		return NULL;
 
 	while (check(p, TOKEN_BIT_AND)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseEquality(p);
@@ -497,7 +545,7 @@ AstNode *parseBitwiseAnd(Parser *p) {
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -514,7 +562,7 @@ AstNode *parseBitwiseXor(Parser *p) {
 		return NULL;
 
 	while (check(p, TOKEN_BIT_XOR)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseBitwiseAnd(p);
@@ -528,7 +576,7 @@ AstNode *parseBitwiseXor(Parser *p) {
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -545,7 +593,7 @@ AstNode *parseBitwiseOr(Parser *p) {
 		return NULL;
 
 	while (check(p, TOKEN_BIT_OR)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseBitwiseXor(p);
@@ -559,7 +607,7 @@ AstNode *parseBitwiseOr(Parser *p) {
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -576,7 +624,7 @@ AstNode *parseLogicalAnd(Parser *p) {
 		return NULL;
 
 	while (check(p, TOKEN_AND)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseBitwiseOr(p);
@@ -590,7 +638,7 @@ AstNode *parseLogicalAnd(Parser *p) {
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -607,7 +655,7 @@ AstNode *parseLogicalOr(Parser *p) {
 		return NULL;
 
 	while (check(p, TOKEN_OR)) {
-		Token *operator = peek(p);
+		Token *op = peek(p);
 		advance(p);
 
 		AstNode *right = parseLogicalAnd(p);
@@ -615,13 +663,14 @@ AstNode *parseLogicalOr(Parser *p) {
 			break;
 
 		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+		node->token = op;
 		if (!node)
 			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
 		node->data.binaryOp.right = right;
-		node->data.binaryOp.operator = operator->type;
+		node->data.binaryOp.op = op->type;
 		left = node;
 	}
 
@@ -699,8 +748,9 @@ AstNode *parseBlockStatement(Parser *p) {
 	AstNode *statement = NULL;
 	while (!atEnd(p) && peek(p)->type != TOKEN_RBRACE) { // statement*
 		statement = parseStatement(p);
-		if (statement)
-			astBlockPush(block, statement);
+		if (!statement)
+			break;
+		astBlockPush(block, statement);
 	}
 
 	if (!check(p, TOKEN_RBRACE)) { // "}"
@@ -762,28 +812,22 @@ AstNode *parseIfStatement(Parser *p) {
 }
 
 // Return statement
-// return expression? ";"
+// return statement
 AstNode *parseReturnStatement(Parser *p) {
 	if (!check(p, TOKEN_KEYWORD_RETURN)) // return
 		return NULL;
 	Token *t = peek(p);
 	advance(p);
 
-	AstNode *expression = NULL;
-	if (!check(p, TOKEN_SEMICOLON)) {
-		expression = parseExpression(p);
-		if (!expression)
+	AstNode *statement = NULL;
+	if (!match(p, TOKEN_SEMICOLON)) {
+		statement = parseStatement(p);
+		if (!statement)
 			return NULL;
-
-		if (!check(p, TOKEN_SEMICOLON)) { // Esperar ";"
-			tokenLogger(LOG_ERROR, *(peek(p)),
-			            "Syntax error: Expected ';' after expression");
-			return NULL;
-		}
 	} else {
-		expression = (AstNode *)malloc(sizeof(AstNode));
-		expression->type = NODE_NULL;
-		expression->token = peek(p);
+		statement = (AstNode *)malloc(sizeof(AstNode));
+		statement->type = NODE_NULL;
+		statement->token = peek(p);
 
 		if (!check(p, TOKEN_SEMICOLON)) { // Esperar ";"
 			tokenLogger(LOG_ERROR, *(peek(p)),
@@ -791,12 +835,11 @@ AstNode *parseReturnStatement(Parser *p) {
 			return NULL;
 		}
 	}
-	advance(p);
 
 	AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 	node->type = NODE_RETURN_STATEMENT;
 	node->token = t;
-	node->data.returnStatement.expression = expression;
+	node->data.returnStatement.statement = statement;
 
 	return node;
 }
@@ -858,6 +901,95 @@ AstNode *parseVarStatement(Parser *p) {
 	return node;
 }
 
+// fn statement
+// fn IDENTIFIER "(" params ")" statement
+AstNode *parseFnStatement(Parser *p) {
+	if (!check(p, TOKEN_KEYWORD_FN)) // fn
+		return NULL;
+	Token *t = peek(p);
+	advance(p);
+
+	AstNode *functionName = parsePrimary(p);
+	if (!functionName || functionName->type != NODE_IDENTIFIER)
+		return NULL;
+
+	AstNode **params = NULL;
+	size_t paramCount = 0;
+	size_t cap = 0;
+
+	if (!match(p, TOKEN_LPAREN)) { // "("
+		tokenLogger(LOG_ERROR, *(peek(p)),
+		            "Syntax error: Expected '(' after function name");
+		return NULL;
+	}
+
+	if (!check(p, TOKEN_RPAREN)) {
+		do {
+			AstNode *param = parsePrimary(p);
+			if (!param)
+				return NULL;
+
+			if (param->type != NODE_IDENTIFIER) {
+				tokenLogger(
+				    LOG_ERROR, *(peek(p)),
+				    "Syntax error: The parameter must be an identifier");
+				return NULL;
+			}
+
+			if (paramCount >= cap) {
+				cap = cap ? cap * 2 : 1;
+				AstNode **newParams =
+				    (AstNode **)realloc(params, cap * sizeof(AstNode *));
+
+				if (!newParams) {
+					logger(LOG_ERROR, "Internal error: Failed to alloc params");
+					free(params);
+					return NULL;
+				}
+				params = newParams;
+			}
+
+			params[paramCount++] = param;
+		} while (match(p, TOKEN_COMMA));
+
+		if (!match(p, TOKEN_RPAREN)) {
+			tokenLogger(LOG_ERROR, *(peek(p)),
+			            "Syntax error: Expected ')' after parameters");
+			free(params);
+			return NULL;
+		}
+	} else {
+		advance(p);
+	}
+
+	AstNode *statement = parseStatement(p);
+	if (!statement) {
+		free(params);
+		return NULL;
+	}
+
+	AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+	if (!node) {
+		free(params);
+		return NULL;
+	}
+	node->token = t;
+	node->type = NODE_FN_STATEMENT;
+	node->data.fnStatement.functionName = functionName;
+	node->data.fnStatement.paramCount = paramCount;
+	node->data.fnStatement.params = params;
+	node->data.fnStatement.statement = statement;
+
+	return node;
+}
+
+// While
+AstNode *parseWhileStatement(Parser *p) {
+    (void)p;
+    // TODO: implementar
+    return NULL;
+}
+
 // Statement
 AstNode *parseStatement(Parser *p) {
 	if (atEnd(p))
@@ -876,6 +1008,10 @@ AstNode *parseStatement(Parser *p) {
 	if (check(p,
 	          TOKEN_KEYWORD_VAR)) // var: var identifier ["=" expression] ";"
 		return parseVarStatement(p);
+
+	if (check(p,
+	          TOKEN_KEYWORD_FN)) // fn: fn identifier "(" params ")" statement
+		return parseFnStatement(p);
 
 	return parseExpressionStatement(p);
 }

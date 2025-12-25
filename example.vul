@@ -1,8 +1,31 @@
-# Code example
+# Calculadora do Amor Vulcânica ❤️
+# Algoritmo ultra científico baseado em tamanho dos nomes 
 
-var nome = "Matheus";
-var saudacaoPrefix = "Bem-vindo, ";
+print("=== Calculadora do Amor Vulcânica ❤️ ===\n");
 
-var saudacao = saudacaoPrefix + nome;
+# Função auxiliar pra perguntar bonitinho
+fn perguntar(msg) {
+    return input(msg + ": ");
+}
 
-return saudacao;
+var nome1 = perguntar("Nome da primeira pessoa");
+var nome2 = perguntar("Nome da segunda pessoa");
+
+# Magia acontece aqui: length(string) builtin novo em folha 
+var amor = (length(nome1) + length(nome2)) * 7 % 101;
+
+print("\nAnalisando compatibilidade entre ", nome1, " e ", nome2, "...\n");
+
+if (amor > 90) {
+    print("❤️❤️❤️ MATCH PERFEITO! Vocês são almas gêmeas: ", amor, "% ❤️❤️❤️");
+} else if (amor > 70) {
+    print(" Tá pegando fogo hein! Compatibilidade alta: ", amor, "% ");
+} else if (amor > 50) {
+    print("😏 Tem química... potencial bom: ", amor, "% 😏");
+} else if (amor > 30) {
+    print(" Meio morno... ", amor, "% ");
+} else {
+    print(" Corre enquanto dá tempo! Só ", amor, "% ");
+}
+
+print("\nAlgoritmo 100% científico, confia.\n");

@@ -18,6 +18,7 @@ typedef enum {
 	NODE_IF_STATEMENT,
 	NODE_RETURN_STATEMENT,
 	NODE_VAR_STATEMENT,
+	NODE_FN_STATEMENT,
 
 	// Literais
 	NODE_NUMBER,
@@ -31,7 +32,8 @@ typedef enum {
 	// Expressões
 	NODE_BINARYOP,
 	NODE_UNARYOP,
-	NODE_ASSIGNMENT
+	NODE_ASSIGNMENT,
+	NODE_CALL
 } NodeType;
 
 // Nó
@@ -68,7 +70,7 @@ typedef struct AstNode {
 
 		// NODE_RETURN_STATEMENT
 		struct {
-			struct AstNode *expression;
+			struct AstNode *statement;
 		} returnStatement;
 
 		// NODE_VAR_STATEMENT
@@ -76,6 +78,14 @@ typedef struct AstNode {
 			struct AstNode *identifier;
 			struct AstNode *expression;
 		} varStatement;
+
+		// NODE_FN_STATEMENT
+		struct {
+			struct AstNode **params;
+			size_t paramCount;
+			struct AstNode *functionName; // NODE_IDENTIFIER
+			struct AstNode *statement;
+		} fnStatement;
 
 		// NODE_NUMBER
 		struct {
@@ -107,13 +117,13 @@ typedef struct AstNode {
 		struct {
 			struct AstNode *left;
 			struct AstNode *right;
-			TokenType operator;
+			TokenType op;
 		} binaryOp;
 
 		// NODE_UNARYOP
 		struct {
 			struct AstNode *operand;
-			TokenType operator;
+			TokenType op;
 		} unaryOp;
 
 		// NODE_ASSIGNMENT
@@ -121,6 +131,13 @@ typedef struct AstNode {
 			struct AstNode *target;
 			struct AstNode *value;
 		} assigment;
+
+		// NODE_CALL
+		struct {
+			struct AstNode *callee;
+			struct AstNode **args;
+			size_t argc;
+		} call;
 	} data;
 } AstNode;
 

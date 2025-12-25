@@ -30,6 +30,7 @@ Keyword keywords[] = {
 
     {"if", TOKEN_KEYWORD_IF},
     {"else", TOKEN_KEYWORD_ELSE},
+    {"while", TOKEN_KEYWORD_WHILE},
 
     {"var", TOKEN_KEYWORD_VAR},
     {"fn", TOKEN_KEYWORD_FN},

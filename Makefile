@@ -8,10 +8,14 @@ OBJDIR := $(BUILDDIR)/obj
 DEPDIR := $(BUILDDIR)/dep
 BINDIR :=$(BUILDDIR)/bin
 
+VERSION := 0.1
+
 CC ?= gcc
-CFLAGS := -O2 -g -Wall -Wextra -I $(SRCDIR)
+DEFS := -DVERSION=$(VERSION)
 LIBS := -lm
 FORMATSTYLE := "{BasedOnStyle: LLVM, UseTab: ForIndentation, IndentWidth: 4, TabWidth: 4}"
+
+PREFIX ?= /usr/local
 
 TEMPDIRS := $(BUILDDIR) $(OBJDIR) $(DEPDIR) $(BINDIR)
 
@@ -23,6 +27,7 @@ SOURCE := \
 			 $(SRCDIR)/parser/ast.c \
 			 $(SRCDIR)/parser/parser.c \
 			 $(SRCDIR)/eval/eval.c \
+			 $(SRCDIR)/eval/value.c \
 			 $(SRCDIR)/eval/arena.c \
 			 $(SRCDIR)/eval/environment.c 
 
@@ -33,10 +38,10 @@ TARGET ?= $(BINDIR)/vul
 
 all: release
 
-debug: CFLAGS := -O0 -g3 -Wall -Wextra -DDEBUG -I $(SRCDIR)
+debug: CFLAGS := -O0 -g3 -Wall -Wextra -DDEBUG -I $(SRCDIR) $(DEFS)
 debug: $(BUILDDIR)/.debug $(TARGET)
 
-release: CFLAGS := -O2 -g -Wall -Wextra -DNDEBUG -I $(SRCDIR)
+release: CFLAGS := -O2 -g -Wall -Wextra -DNDEBUG -I $(SRCDIR) $(DEFS)
 release: $(BUILDDIR)/.release $(TARGET)
 
 clean:
@@ -52,6 +57,11 @@ example: $(TARGET)
 format:
 	@echo "  FORMAT    *.c *.h"
 	@find . -name "*.c" -o -name "*.h"  | xargs clang-format -i --style=$(FORMATSTYLE) 
+
+install:
+	@echo "  INSTALL   $(PREFIX)/bin/$(notdir $(TARGET))"
+	@mkdir -p $(PREFIX)/bin
+	@cp $(TARGET) $(PREFIX)/bin
 
 $(BUILDDIR)/.debug: 
 	@echo "  DEBUG     BUILD"
@@ -74,5 +84,5 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
 	@mkdir -p $(dir $@) $(dir $(DEPDIR)/$*.d)
 	@$(CC) $(CFLAGS) -MMD -MF $(DEPDIR)/$*.d -c $< -o $@
 
-.PHONY: all release debug clean example format
+.PHONY: all release debug clean install example format
 -include $(DEP)

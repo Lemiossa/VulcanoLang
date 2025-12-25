@@ -100,10 +100,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	astDump(root, 0);
-
 	Value ret = eval(root, arena, environment);
-	printValue(ret);
 
 	environmentDestroy(environment);
 	arenaDestroy(arena);
