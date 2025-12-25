@@ -1,3 +1,92 @@
+./environment.c
+/**
+ * environment.c
+ * Criado por Matheus Leme Da Silva
+ * Licença MIT
+ */
+#include "environment.h"
+
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "../util.h"
+
+// Cria um novo Environment
+Environment *environmentCreate(size_t initial, Environment *parent) {
+	Environment *environment = (Environment *)malloc(sizeof(Environment));
+	if (!environment)
+		return NULL;
+
+	environment->capacity = initial ? initial : 1;
+	environment->count = 0;
+	environment->parent = parent;
+
+	environment->objects =
+	    (Object *)malloc(environment->capacity * sizeof(Object));
+	if (!environment->objects) {
+		free(environment);
+		return NULL;
+	}
+
+	return environment;
+}
+
+// Cria um novo objeto num environment
+bool environmentPushObject(Environment *environment, Object object) {
+	if (!environment) {
+		return false;
+	}
+
+	if (environment->count >= environment->capacity) {
+		size_t newCapacity = environment->capacity * 2;
+		Object *newObjects = (Object *)realloc(environment->objects,
+		                                       newCapacity * sizeof(Object));
+		if (!newObjects) {
+			return false;
+		}
+		environment->capacity = newCapacity;
+		environment->objects = newObjects;
+	}
+
+	environment->objects[environment->count++] = object;
+	return true;
+}
+
+// Procura um objeto num environment
+// Retorna o ponteiro direto para o Value do objeto
+Value *environmentFindObject(Environment *environment, char *start,
+                             size_t length) {
+	if (!environment || !start || length == 0)
+		return NULL;
+
+	Environment *e = environment;
+	while (e) {
+		for (int i = (int)e->count - 1; i >= 0; i++) {
+			Object *object = &e->objects[i];
+            if (!object) continue;
+			if (object->length == length &&
+                    strncmp(start, object->start, length) == 0) {	
+                return &object->value;
+			}
+		}
+		e = e->parent;
+	}
+
+	return NULL;
+}
+
+// Destroi um environment
+void environmentDestroy(Environment *environment) {
+	if (!environment)
+		return;
+
+	environment->capacity = 0;
+	environment->count = 0;
+	free(environment->objects);
+	free(environment);
+}
+./eval.c
 /**
  * eval.c
  * Criado por Matheus Leme Da Silva
@@ -284,23 +373,19 @@ Value evalIfStatement(AstNode *root, Arena *arena, Environment *environment) {
 
 // Var
 Value evalVarStatement(AstNode *root, Arena *arena, Environment *environment) {
-	Object variable;
-	variable.start =
-	    (char *)root->data.varStatement.identifier->data.identifier.name;
-	variable.length =
-	    root->data.varStatement.identifier->data.identifier.length;
-	variable.value =
-	    eval(root->data.varStatement.expression, arena, environment);
+    Object variable;
+    variable.start = (char *)root->data.varStatement.identifier->data.identifier.name;
+    variable.length = root->data.varStatement.identifier->data.identifier.length;
+    variable.value = eval(root->data.varStatement.expression, arena, environment);
 
-	if (variable.value.type == VALUE_ERROR_SIGNAL)
-		return errorSignal();
+    if (variable.value.type == VALUE_ERROR_SIGNAL) return errorSignal();
 
-	if (!environmentPushObject(environment, variable)) {
-		logger(LOG_ERROR, "Internal error: Failed to push variable\n");
-		return errorSignal();
-	}
+    if (!environmentPushObject(environment, variable)) {
+        logger(LOG_ERROR, "Internal error: Failed to push variable\n");
+        return errorSignal();
+    }
 
-	return null();
+    return null();
 }
 
 // Number
@@ -333,7 +418,7 @@ Value evalBoolean(AstNode *root, Arena *arena, Environment *environment) {
 // Identifier
 Value evalIdentifier(AstNode *root, Arena *arena, Environment *environment) {
 	(void)arena;
-	Value *value =
+    Value *value =
 	    environmentFindObject(environment, (char *)root->data.identifier.name,
 	                          root->data.identifier.length);
 	if (!value) {
@@ -694,3 +779,168 @@ Value evalUnaryOp(AstNode *root, Arena *arena, Environment *environment) {
 
 	return v;
 }
+./arena.c
+/**
+ * arena.c
+ * Criado por Matheus Leme Da Silva
+ * Licença MIT
+ */
+#include "arena.h"
+
+#include <stdlib.h>
+
+// Cria uma arena
+Arena *arenaCreate(size_t initial) {
+	Arena *a = (Arena *)malloc(sizeof(Arena));
+	if (!a)
+		return NULL;
+
+	// Inicializar
+	a->buffer = malloc(initial);
+	a->length = initial;
+	a->offset = 0;
+	if (!a->buffer) {
+		free(a);
+		return NULL;
+	}
+
+	return a;
+}
+
+// Aloca na arena
+void *arenaAlloc(Arena *arena, size_t length) {
+	if (!arena)
+		return NULL;
+
+	if (arena->offset + length > arena->length) {
+		// Realocar com o novo tamanho
+		size_t newLength = arena->length * 2;
+
+		if (newLength < arena->offset + length)
+			newLength = arena->offset + length;
+
+		void *newPtr = realloc(arena->buffer, newLength);
+		if (!newPtr)
+			return NULL;
+
+		arena->length = newLength;
+		arena->buffer = newPtr;
+	}
+
+	void *ptr = arena->buffer + arena->offset;
+	arena->offset += length;
+	return ptr;
+}
+
+// Reseta a Arena
+void arenaReset(Arena *arena) {
+	if (!arena)
+		return;
+	arena->offset = 0;
+}
+
+// Destroí uma Arena
+void arenaDestroy(Arena *arena) {
+	if (!arena)
+		return;
+	free(arena->buffer);
+	arena->buffer = NULL;
+	arena->length = 0;
+	arena->offset = 0;
+	free(arena);
+}
+./eval.h
+/**
+ * eval.h
+ * Criado por Matheus Leme Da Silva
+ * Licença MIT
+ */
+#pragma once
+#include "../parser/ast.h"
+#include "arena.h"
+#include "environment.h"
+#include "value.h"
+
+Value eval(AstNode *root, Arena *arena, Environment *environment);
+void printValue(Value value);
+./arena.h
+/**
+ * arena.h
+ * Criado por Matheus Leme Da Silva
+ * Licença MIT
+ */
+#pragma once
+#include <stddef.h>
+
+typedef struct Arena {
+	void *buffer;
+	size_t length;
+	size_t offset;
+} Arena;
+
+Arena *arenaCreate(size_t initial);
+void *arenaAlloc(Arena *arena, size_t length);
+void arenaReset(Arena *arena);
+void arenaDestroy(Arena *arena);
+./value.h
+/**
+ * value.h
+ * Criado por Matheus Leme Da Silva
+ * Licença MIT
+ */
+#pragma once
+#include <stdbool.h>
+#include <stddef.h>
+
+typedef enum {
+	VALUE_INTEGER = 1,
+	VALUE_FLOATING,
+	VALUE_STRING,
+	VALUE_BOOLEAN,
+	VALUE_NULL,
+	VALUE_RETURN_SIGNAL,
+	VALUE_ERROR_SIGNAL
+} ValueType;
+
+typedef struct Value {
+	ValueType type;
+	union {
+		long long integer;
+		double floating;
+		struct {
+			const char *start;
+			size_t length;
+		} string;
+		bool boolean;
+		struct Value *returnValue;
+	} value;
+} Value;
+./environment.h
+/**
+ * environment.h
+ * Criado por Matheus Leme Da Silva
+ * Licença MIT
+ */
+#pragma once
+#include "value.h"
+#include <stdbool.h>
+#include <stddef.h>
+
+typedef struct Object {
+	char *start;
+	size_t length;
+	Value value;
+} Object;
+
+typedef struct Environment {
+	Object *objects;
+	size_t count;
+	size_t capacity;
+	struct Environment *parent;
+} Environment;
+
+Environment *environmentCreate(size_t initial, Environment *parent);
+bool environmentPushObject(Environment *environment, Object object);
+Value *environmentFindObject(Environment *environment, char *start,
+                             size_t length);
+void environmentDestroy(Environment *environment);

@@ -17,6 +17,7 @@ typedef enum {
 	NODE_EXPRESSION_STATEMENT,
 	NODE_IF_STATEMENT,
 	NODE_RETURN_STATEMENT,
+	NODE_VAR_STATEMENT,
 
 	// Literais
 	NODE_NUMBER,
@@ -36,39 +37,45 @@ typedef enum {
 // Nó
 typedef struct AstNode {
 	NodeType type;
-	Token* token;
+	Token *token;
 
 	union {
 		// NODE_PROGRAM
 		struct {
-			struct AstNode** statements;
+			struct AstNode **statements;
 			size_t count;
 			size_t capacity;
 		} program;
 
 		// NODE_BLOCK_STATEMENT
 		struct {
-			struct AstNode** statements;
+			struct AstNode **statements;
 			size_t count;
 			size_t capacity;
 		} blockStatement;
 
 		// NODE_EXPRESSION_STATEMENT
 		struct {
-			struct AstNode* expression;
+			struct AstNode *expression;
 		} expressionStatement;
 
 		// NODE_IF_STATEMENT
 		struct {
-			struct AstNode* condition;
-			struct AstNode* thenBranch;
-			struct AstNode* elseBranch;
+			struct AstNode *condition;
+			struct AstNode *thenBranch;
+			struct AstNode *elseBranch;
 		} ifStatement;
 
 		// NODE_RETURN_STATEMENT
 		struct {
-			struct AstNode* expression;
+			struct AstNode *expression;
 		} returnStatement;
+
+		// NODE_VAR_STATEMENT
+		struct {
+			struct AstNode *identifier;
+			struct AstNode *expression;
+		} varStatement;
 
 		// NODE_NUMBER
 		struct {
@@ -81,7 +88,7 @@ typedef struct AstNode {
 
 		// NODE_STRING
 		struct {
-			const char* start;
+			const char *start;
 			size_t length;
 		} string;
 
@@ -92,36 +99,36 @@ typedef struct AstNode {
 
 		// NODE_IDENTIFIER
 		struct {
-			const char* name;
+			const char *name;
 			size_t length;
 		} identifier;
 
 		// NODE_BINARYOP
 		struct {
-			struct AstNode* left;
-			struct AstNode* right;
+			struct AstNode *left;
+			struct AstNode *right;
 			TokenType operator;
 		} binaryOp;
 
 		// NODE_UNARYOP
 		struct {
-			struct AstNode* operand;
+			struct AstNode *operand;
 			TokenType operator;
 		} unaryOp;
 
 		// NODE_ASSIGNMENT
 		struct {
-			struct AstNode* target;
-			struct AstNode* value;
+			struct AstNode *target;
+			struct AstNode *value;
 		} assigment;
 	} data;
 } AstNode;
 
-void astDump(AstNode* root, int depth);
-void astDestroy(AstNode* root);
+void astDump(AstNode *root, int depth);
+void astDestroy(AstNode *root);
 
-AstNode* astProgramCreate(void);
-void astProgramPush(AstNode* program, AstNode* statement);
+AstNode *astProgramCreate(void);
+void astProgramPush(AstNode *program, AstNode *statement);
 
-AstNode* astBlockCreate(void);
-void astBlockPush(AstNode* program, AstNode* statement);
+AstNode *astBlockCreate(void);
+void astBlockPush(AstNode *program, AstNode *statement);

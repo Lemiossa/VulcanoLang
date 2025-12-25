@@ -11,7 +11,7 @@ BINDIR :=$(BUILDDIR)/bin
 CC ?= gcc
 CFLAGS := -O2 -g -Wall -Wextra -I $(SRCDIR)
 LIBS := -lm
-FORMATSTYLE := "{BasedOnStyle: Google, UseTab: ForIndentation, IndentWidth: 4, TabWidth: 4}"
+FORMATSTYLE := "{BasedOnStyle: LLVM, UseTab: ForIndentation, IndentWidth: 4, TabWidth: 4}"
 
 TEMPDIRS := $(BUILDDIR) $(OBJDIR) $(DEPDIR) $(BINDIR)
 
@@ -23,7 +23,8 @@ SOURCE := \
 			 $(SRCDIR)/parser/ast.c \
 			 $(SRCDIR)/parser/parser.c \
 			 $(SRCDIR)/eval/eval.c \
-			 $(SRCDIR)/eval/arena.c 
+			 $(SRCDIR)/eval/arena.c \
+			 $(SRCDIR)/eval/environment.c 
 
 OBJ := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SOURCE))
 DEP := $(patsubst $(SRCDIR)/%.c,$(DEPDIR)/%.d,$(SOURCE))

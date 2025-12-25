@@ -8,9 +8,10 @@
 #include <stdlib.h>
 
 // Cria uma arena
-Arena* arenaCreate(size_t initial) {
-	Arena* a = (Arena*)malloc(sizeof(Arena));
-	if (!a) return NULL;
+Arena *arenaCreate(size_t initial) {
+	Arena *a = (Arena *)malloc(sizeof(Arena));
+	if (!a)
+		return NULL;
 
 	// Inicializar
 	a->buffer = malloc(initial);
@@ -25,8 +26,9 @@ Arena* arenaCreate(size_t initial) {
 }
 
 // Aloca na arena
-void* arenaAlloc(Arena* arena, size_t length) {
-	if (!arena) return NULL;
+void *arenaAlloc(Arena *arena, size_t length) {
+	if (!arena)
+		return NULL;
 
 	if (arena->offset + length > arena->length) {
 		// Realocar com o novo tamanho
@@ -35,27 +37,30 @@ void* arenaAlloc(Arena* arena, size_t length) {
 		if (newLength < arena->offset + length)
 			newLength = arena->offset + length;
 
-		void* newPtr = realloc(arena->buffer, newLength);
-		if (!newPtr) return NULL;
+		void *newPtr = realloc(arena->buffer, newLength);
+		if (!newPtr)
+			return NULL;
 
 		arena->length = newLength;
 		arena->buffer = newPtr;
 	}
 
-	void* ptr = arena->buffer + arena->offset;
+	void *ptr = arena->buffer + arena->offset;
 	arena->offset += length;
 	return ptr;
 }
 
 // Reseta a Arena
-void arenaReset(Arena* arena) {
-	if (!arena) return;
+void arenaReset(Arena *arena) {
+	if (!arena)
+		return;
 	arena->offset = 0;
 }
 
 // Destroí uma Arena
-void arenaDestroy(Arena* arena) {
-	if (!arena) return;
+void arenaDestroy(Arena *arena) {
+	if (!arena)
+		return;
 	free(arena->buffer);
 	arena->buffer = NULL;
 	arena->length = 0;

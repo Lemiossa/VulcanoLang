@@ -68,6 +68,7 @@ typedef enum {
 	TOKEN_KEYWORD_IF,
 	TOKEN_KEYWORD_ELSE,
 
+	TOKEN_KEYWORD_VAR,
 	TOKEN_KEYWORD_FN,
 	TOKEN_KEYWORD_RETURN
 } TokenType;
@@ -75,8 +76,8 @@ typedef enum {
 // Token
 typedef struct {
 	TokenType type;
-	const char* content;
-	const char* start;
+	const char *content;
+	const char *start;
 	size_t length;
 	size_t line;
 	size_t column;
@@ -84,13 +85,13 @@ typedef struct {
 
 // TokenArray
 typedef struct {
-	Token* data;
+	Token *data;
 	size_t count;
 	size_t capacity;
 } TokenArray;
 
-void tokenInit(TokenArray* arr);
-void tokenPush(TokenArray* arr, Token t);
-void tokenDestroy(TokenArray* arr);
-void tokenDump(TokenArray* arr);
-int tokenLogger(LogLevel level, Token t, const char* format, ...);
+void tokenInit(TokenArray *arr);
+void tokenPush(TokenArray *arr, Token t);
+void tokenDestroy(TokenArray *arr);
+void tokenDump(TokenArray *arr);
+int tokenLogger(LogLevel level, Token t, const char *format, ...);

@@ -11,10 +11,10 @@
 #include "util.h"
 
 // Inicia um TokenArray
-void tokenInit(TokenArray* arr) {
+void tokenInit(TokenArray *arr) {
 	arr->count = 0;
 	arr->capacity = 64;
-	arr->data = (Token*)malloc(arr->capacity * sizeof(Token));
+	arr->data = (Token *)malloc(arr->capacity * sizeof(Token));
 
 	if (!arr->data) {
 		logger(LOG_ERROR, "Failed to alocate token array data\n");
@@ -23,7 +23,7 @@ void tokenInit(TokenArray* arr) {
 }
 
 // Adiciona um token a um TokenArray
-void tokenPush(TokenArray* arr, Token t) {
+void tokenPush(TokenArray *arr, Token t) {
 	if (!arr) {
 		logger(LOG_ERROR, "Failed to push token: array is NULL\n");
 		return;
@@ -31,7 +31,7 @@ void tokenPush(TokenArray* arr, Token t) {
 
 	if (arr->count >= arr->capacity) {
 		arr->capacity *= 2;
-		arr->data = (Token*)realloc(arr->data, arr->capacity * sizeof(Token));
+		arr->data = (Token *)realloc(arr->data, arr->capacity * sizeof(Token));
 		if (!arr->data) {
 			logger(LOG_ERROR, "Failed to realloc token array data");
 			return;
@@ -43,7 +43,7 @@ void tokenPush(TokenArray* arr, Token t) {
 
 // Limpa um TokenArray
 // Invalída TokenArray
-void tokenDestroy(TokenArray* arr) {
+void tokenDestroy(TokenArray *arr) {
 	if (!arr) {
 		return;
 	}
@@ -55,7 +55,7 @@ void tokenDestroy(TokenArray* arr) {
 }
 
 // Token Dump
-void tokenDump(TokenArray* arr) {
+void tokenDump(TokenArray *arr) {
 	if (!arr || !arr->data) {
 		return;
 	}
@@ -69,9 +69,11 @@ void tokenDump(TokenArray* arr) {
 }
 
 // Retorna o ponteiro do inicio de uma linha espeçífica
-const char* getLine(const char* content, size_t line, size_t* length) {
-	if (!content) return NULL;
-	if (!length) return NULL;
+const char *getLine(const char *content, size_t line, size_t *length) {
+	if (!content)
+		return NULL;
+	if (!length)
+		return NULL;
 
 	while (*content && line > 0) {
 		if (*content == '\n') {
@@ -81,9 +83,10 @@ const char* getLine(const char* content, size_t line, size_t* length) {
 		content++;
 	}
 
-	if (line != 0) return NULL;
+	if (line != 0)
+		return NULL;
 
-	const char* start = content;
+	const char *start = content;
 	*length = 0;
 
 	while (*content && *content != '\n') {
@@ -95,31 +98,31 @@ const char* getLine(const char* content, size_t line, size_t* length) {
 }
 
 // Faz um log de token
-int tokenLogger(LogLevel level, Token t, const char* format, ...) {
-	const char* color;
-	const char* label;
+int tokenLogger(LogLevel level, Token t, const char *format, ...) {
+	const char *color;
+	const char *label;
 
 	switch (level) {
-		case LOG_ERROR: {
-			color = "\033[91m";
-			label = "ERROR";
-		} break;
+	case LOG_ERROR: {
+		color = "\033[91m";
+		label = "ERROR";
+	} break;
 
-		case LOG_SUCCESS: {
-			color = "\033[92m";
-			label = "SUCCESS";
-		} break;
+	case LOG_SUCCESS: {
+		color = "\033[92m";
+		label = "SUCCESS";
+	} break;
 
-		case LOG_WARNING: {
-			color = "\033[93m";
-			label = "WARNING";
-		} break;
+	case LOG_WARNING: {
+		color = "\033[93m";
+		label = "WARNING";
+	} break;
 
-		case LOG_INFO:
-		default: {
-			color = "\033[94m";
-			label = "INFO";
-		} break;
+	case LOG_INFO:
+	default: {
+		color = "\033[94m";
+		label = "INFO";
+	} break;
 	}
 
 	// Imprimir erro
@@ -133,10 +136,11 @@ int tokenLogger(LogLevel level, Token t, const char* format, ...) {
 	printf("\n");
 
 	size_t lineLength = 0;
-	const char* line = getLine(t.content, t.line - 1, &lineLength);
+	const char *line = getLine(t.content, t.line - 1, &lineLength);
 
 	// Apontar erro
-	if (!line || lineLength == 0) goto end;
+	if (!line || lineLength == 0)
+		goto end;
 	int tabs = 0;
 
 	for (size_t i = 0; i < lineLength; i++) {

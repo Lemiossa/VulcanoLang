@@ -11,51 +11,61 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../lexer/token.h"
+#include "../util.h"
 #include "ast.h"
-#include "lexer/token.h"
-#include "util.h"
 
 // Helpers
 
 // Retorna true se está no ultimo token da lista
-static bool atEnd(Parser* p) { return (p->pos >= p->tokens.count); }
+static bool atEnd(Parser *p) { return (p->pos >= p->tokens.count); }
 
 // Retorna o token atual
-static Token* peek(Parser* p) {
-	if (!p) return NULL;
-	if (!p->tokens.data) return NULL;
-	if (p->pos > p->tokens.count) return NULL;
+static Token *peek(Parser *p) {
+	if (!p)
+		return NULL;
+	if (!p->tokens.data)
+		return NULL;
+	if (p->pos > p->tokens.count)
+		return NULL;
 
 	return &p->tokens.data[p->pos];
 }
 
 // Avança ponteiro de tokens e retorna o token novo
-static Token* advance(Parser* p) {
-	if (!p) return NULL;
-	if (!p->tokens.data) return NULL;
-	if (atEnd(p)) return NULL;
+static Token *advance(Parser *p) {
+	if (!p)
+		return NULL;
+	if (!p->tokens.data)
+		return NULL;
+	if (atEnd(p))
+		return NULL;
 
 	return &p->tokens.data[++p->pos];
 }
 
 // Retorna o token anterior se ele existir
-static Token* previous(Parser* p) {
-	if (!p) return NULL;
-	if (!p->tokens.data) return NULL;
-	if (p->pos == 0) return NULL;
-
-	return &p->tokens.data[p->pos - 1];
-}
+// static Token *previous(Parser *p) {
+//	if (!p)
+//		return NULL;
+//	if (!p->tokens.data)
+//		return NULL;
+//	if (p->pos == 0)
+//		return NULL;
+//
+//	return &p->tokens.data[p->pos - 1];
+//}
 
 // Verifica se o tipo do token atual bate sem avançar o ponteiro
-static bool check(Parser* p, TokenType type) {
-	Token* t = peek(p);
-	if (!t) return false;
+static bool check(Parser *p, TokenType type) {
+	Token *t = peek(p);
+	if (!t)
+		return false;
 	return t->type == type;
 }
 
 // Verifica se o tipo do atual bate, se bater, avança o ponteiro
-static bool match(Parser* p, TokenType type) {
+static bool match(Parser *p, TokenType type) {
 	if (check(p, type)) {
 		advance(p);
 		return true;
@@ -64,31 +74,31 @@ static bool match(Parser* p, TokenType type) {
 	return false;
 }
 
-AstNode* parseLiteral(Parser* p);
-AstNode* parsePrimary(Parser* p);
-AstNode* parseUnary(Parser* p);
-AstNode* parseMultiplication(Parser* p);
-AstNode* parseAdition(Parser* p);
-AstNode* parseShift(Parser* p);
-AstNode* parseComparison(Parser* p);
-AstNode* parseEquality(Parser* p);
-AstNode* parseBitwiseAnd(Parser* p);
-AstNode* parseBitwiseXor(Parser* p);
-AstNode* parseBitwiseOr(Parser* p);
-AstNode* parseLogicalAnd(Parser* p);
-AstNode* parseLogicalOr(Parser* p);
-AstNode* parseAssignment(Parser* p);
-AstNode* parseExpression(Parser* p);
+AstNode *parseLiteral(Parser *p);
+AstNode *parsePrimary(Parser *p);
+AstNode *parseUnary(Parser *p);
+AstNode *parseMultiplication(Parser *p);
+AstNode *parseAdition(Parser *p);
+AstNode *parseShift(Parser *p);
+AstNode *parseComparison(Parser *p);
+AstNode *parseEquality(Parser *p);
+AstNode *parseBitwiseAnd(Parser *p);
+AstNode *parseBitwiseXor(Parser *p);
+AstNode *parseBitwiseOr(Parser *p);
+AstNode *parseLogicalAnd(Parser *p);
+AstNode *parseLogicalOr(Parser *p);
+AstNode *parseAssignment(Parser *p);
+AstNode *parseExpression(Parser *p);
 
-AstNode* parseExpressionStatement(Parser* p);
-AstNode* parseBlockStatement(Parser* p);
-AstNode* parseIfStatement(Parser* p);
-AstNode* parseReturnStatement(Parser* p);
+AstNode *parseExpressionStatement(Parser *p);
+AstNode *parseBlockStatement(Parser *p);
+AstNode *parseIfStatement(Parser *p);
+AstNode *parseReturnStatement(Parser *p);
 
-AstNode* parseStatement(Parser* p);
+AstNode *parseStatement(Parser *p);
 
 // Valída um parser
-bool parserValidate(Parser* p) {
+bool parserValidate(Parser *p) {
 	// Parser NULL
 	if (!p) {
 		logger(LOG_ERROR, "Parser error: parser is NULL\n");
@@ -111,11 +121,13 @@ bool parserValidate(Parser* p) {
 }
 
 // Cria um parser
-Parser* parserCreate(TokenArray tokens) {
-	Parser* p = (Parser*)malloc(sizeof(Parser));
-	if (!p) return NULL;
+Parser *parserCreate(TokenArray tokens) {
+	Parser *p = (Parser *)malloc(sizeof(Parser));
+	if (!p)
+		return NULL;
 
-	if (!tokens.data || tokens.count == 0) return NULL;
+	if (!tokens.data || tokens.count == 0)
+		return NULL;
 
 	p->tokens = tokens;
 	p->pos = 0;
@@ -125,17 +137,20 @@ Parser* parserCreate(TokenArray tokens) {
 
 // Parsea um parser
 // Retorna um AstNode
-AstNode* parserParse(Parser* p) {
-	if (!parserValidate(p)) return NULL;
+AstNode *parserParse(Parser *p) {
+	if (!parserValidate(p))
+		return NULL;
 
 	// Começar criando o nó program
-	AstNode* root = astProgramCreate();
-	if (!root) return NULL;
+	AstNode *root = astProgramCreate();
+	if (!root)
+		return NULL;
 
 	// Começar parsing
 	while (!atEnd(p)) {
-		AstNode* statement = parseStatement(p);
-		if (!statement) break;
+		AstNode *statement = parseStatement(p);
+		if (!statement)
+			break;
 		astProgramPush(root, statement);
 	}
 
@@ -143,7 +158,7 @@ AstNode* parserParse(Parser* p) {
 }
 
 // Destrói um parser
-void parserDestroy(Parser* p) {
+void parserDestroy(Parser *p) {
 	if (!p) {
 		logger(LOG_ERROR, "Parser error: parser is NULL\n");
 		return;
@@ -153,17 +168,18 @@ void parserDestroy(Parser* p) {
 }
 
 // Literal
-AstNode* parseLiteral(Parser* p) {
+AstNode *parseLiteral(Parser *p) {
 	// Number
 	if (check(p, TOKEN_NUMBER_INTEGER) || check(p, TOKEN_NUMBER_FLOAT)) {
-		Token* t = peek(p);
+		Token *t = peek(p);
 		advance(p);
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = t;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
-		char* end;
+		char *end;
 		if (t->type == TOKEN_NUMBER_INTEGER) {
 			long long value = strtoll(t->start, &end, 0);
 			if (end == t->start) {
@@ -191,11 +207,12 @@ AstNode* parseLiteral(Parser* p) {
 
 	// String
 	if (check(p, TOKEN_STRING)) {
-		Token* t = peek(p);
+		Token *t = peek(p);
 		advance(p);
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = t;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_STRING;
 		node->data.string.start = t->start;
@@ -205,11 +222,12 @@ AstNode* parseLiteral(Parser* p) {
 
 	// Boleano
 	if (check(p, TOKEN_KEYWORD_TRUE) || check(p, TOKEN_KEYWORD_FALSE)) {
-		Token* t = peek(p);
+		Token *t = peek(p);
 		advance(p);
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = t;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BOOLEAN;
 		node->data.boolean.value =
@@ -219,12 +237,13 @@ AstNode* parseLiteral(Parser* p) {
 
 	// Null
 	if (check(p, TOKEN_KEYWORD_NULL)) {
-		Token* t = peek(p);
+		Token *t = peek(p);
 		advance(p);
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = t;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_NULL;
 		return node;
@@ -234,11 +253,11 @@ AstNode* parseLiteral(Parser* p) {
 }
 
 // Primary
-AstNode* parsePrimary(Parser* p) {
+AstNode *parsePrimary(Parser *p) {
 	// "(" expression ")"
 	if (check(p, TOKEN_LPAREN)) {
 		advance(p);
-		AstNode* expression = parseExpression(p);
+		AstNode *expression = parseExpression(p);
 
 		if (!check(p, TOKEN_RPAREN)) {
 			tokenLogger(LOG_ERROR, *(peek(p)), "Expected ')' after expression");
@@ -251,11 +270,12 @@ AstNode* parsePrimary(Parser* p) {
 
 	// identifiers
 	if (check(p, TOKEN_IDENTIFIER)) {
-		Token* t = peek(p);
+		Token *t = peek(p);
 		advance(p);
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_IDENTIFIER;
 		node->data.identifier.name = t->start;
@@ -267,18 +287,20 @@ AstNode* parsePrimary(Parser* p) {
 }
 
 // Unary
-AstNode* parseUnary(Parser* p) {
+AstNode *parseUnary(Parser *p) {
 	if (check(p, TOKEN_NOT) || check(p, TOKEN_BIT_NOT) ||
 	    check(p, TOKEN_MINUS) || check(p, TOKEN_PLUS)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseUnary(p);
-		if (!right) return NULL;
+		AstNode *right = parseUnary(p);
+		if (!right)
+			return NULL;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = operator;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_UNARYOP;
 		node->data.unaryOp.operator = operator->type;
@@ -290,23 +312,27 @@ AstNode* parseUnary(Parser* p) {
 }
 
 // Multiplication
-AstNode* parseMultiplication(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseMultiplication(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseUnary(p);
-	if (!left) return NULL;
+	AstNode *left = parseUnary(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_STAR) || check(p, TOKEN_SLASH) ||
 	       check(p, TOKEN_PERCENT)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseUnary(p);
-		if (!right) break;
+		AstNode *right = parseUnary(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = operator;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -319,22 +345,26 @@ AstNode* parseMultiplication(Parser* p) {
 }
 
 // Adition
-AstNode* parseAdition(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseAdition(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseMultiplication(p);
-	if (!left) return NULL;
+	AstNode *left = parseMultiplication(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_PLUS) || check(p, TOKEN_MINUS)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseMultiplication(p);
-		if (!right) break;
+		AstNode *right = parseMultiplication(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = operator;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -347,22 +377,26 @@ AstNode* parseAdition(Parser* p) {
 }
 
 // Shift
-AstNode* parseShift(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseShift(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseAdition(p);
-	if (!left) return NULL;
+	AstNode *left = parseAdition(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_SHIFT_LEFT) || check(p, TOKEN_SHIFT_RIGHT)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseAdition(p);
-		if (!right) break;
+		AstNode *right = parseAdition(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = operator;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -375,23 +409,27 @@ AstNode* parseShift(Parser* p) {
 }
 
 // Comparison
-AstNode* parseComparison(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseComparison(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseShift(p);
-	if (!left) return NULL;
+	AstNode *left = parseShift(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_LT) || check(p, TOKEN_GT) || check(p, TOKEN_LTE) ||
 	       check(p, TOKEN_GTE)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseShift(p);
-		if (!right) break;
+		AstNode *right = parseShift(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = operator;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -404,22 +442,26 @@ AstNode* parseComparison(Parser* p) {
 }
 
 // Equality
-AstNode* parseEquality(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseEquality(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseComparison(p);
-	if (!left) return NULL;
+	AstNode *left = parseComparison(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_EQ) || check(p, TOKEN_NEQ)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseComparison(p);
-		if (!right) break;
+		AstNode *right = parseComparison(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 		node->token = operator;
-		if (!node) return NULL;
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -432,21 +474,25 @@ AstNode* parseEquality(Parser* p) {
 }
 
 // Bitwise AND
-AstNode* parseBitwiseAnd(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseBitwiseAnd(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseEquality(p);
-	if (!left) return NULL;
+	AstNode *left = parseEquality(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_BIT_AND)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseEquality(p);
-		if (!right) break;
+		AstNode *right = parseEquality(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
-		if (!node) return NULL;
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -459,21 +505,25 @@ AstNode* parseBitwiseAnd(Parser* p) {
 }
 
 // Bitwise XOR
-AstNode* parseBitwiseXor(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseBitwiseXor(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseBitwiseAnd(p);
-	if (!left) return NULL;
+	AstNode *left = parseBitwiseAnd(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_BIT_XOR)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseBitwiseAnd(p);
-		if (!right) break;
+		AstNode *right = parseBitwiseAnd(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
-		if (!node) return NULL;
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -486,21 +536,25 @@ AstNode* parseBitwiseXor(Parser* p) {
 }
 
 // Bitwise OR
-AstNode* parseBitwiseOr(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseBitwiseOr(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseBitwiseXor(p);
-	if (!left) return NULL;
+	AstNode *left = parseBitwiseXor(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_BIT_OR)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseBitwiseXor(p);
-		if (!right) break;
+		AstNode *right = parseBitwiseXor(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
-		if (!node) return NULL;
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -513,21 +567,25 @@ AstNode* parseBitwiseOr(Parser* p) {
 }
 
 // Logical AND
-AstNode* parseLogicalAnd(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseLogicalAnd(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseBitwiseOr(p);
-	if (!left) return NULL;
+	AstNode *left = parseBitwiseOr(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_AND)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseBitwiseOr(p);
-		if (!right) break;
+		AstNode *right = parseBitwiseOr(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
-		if (!node) return NULL;
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -540,21 +598,25 @@ AstNode* parseLogicalAnd(Parser* p) {
 }
 
 // Logical OR
-AstNode* parseLogicalOr(Parser* p) {
-	if (atEnd(p)) return NULL;
+AstNode *parseLogicalOr(Parser *p) {
+	if (atEnd(p))
+		return NULL;
 
-	AstNode* left = parseLogicalAnd(p);
-	if (!left) return NULL;
+	AstNode *left = parseLogicalAnd(p);
+	if (!left)
+		return NULL;
 
 	while (check(p, TOKEN_OR)) {
-		Token* operator = peek(p);
+		Token *operator = peek(p);
 		advance(p);
 
-		AstNode* right = parseLogicalAnd(p);
-		if (!right) break;
+		AstNode *right = parseLogicalAnd(p);
+		if (!right)
+			break;
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
-		if (!node) return NULL;
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+		if (!node)
+			return NULL;
 
 		node->type = NODE_BINARYOP;
 		node->data.binaryOp.left = left;
@@ -569,9 +631,9 @@ AstNode* parseLogicalOr(Parser* p) {
 // Assignment
 // Por enquanto:
 // TOKEN_IDENTIFIER "="
-AstNode* parseAssignment(Parser* p) {
-	Token* firstToken = peek(p);
-	AstNode* target = parseLogicalOr(p);
+AstNode *parseAssignment(Parser *p) {
+	Token *firstToken = peek(p);
+	AstNode *target = parseLogicalOr(p);
 
 	// Se é '=' depois da expressão
 	if (match(p, TOKEN_ASSIGN)) {
@@ -581,10 +643,11 @@ AstNode* parseAssignment(Parser* p) {
 			return NULL;
 		}
 
-		AstNode* value = parseAssignment(p);
+		AstNode *value = parseAssignment(p);
 
-		AstNode* node = (AstNode*)malloc(sizeof(AstNode));
-		if (!node) return NULL;
+		AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+		if (!node)
+			return NULL;
 
 		node->type = NODE_ASSIGNMENT;
 		node->data.assigment.target = target;
@@ -596,12 +659,12 @@ AstNode* parseAssignment(Parser* p) {
 }
 
 // Expression
-AstNode* parseExpression(Parser* p) { return parseAssignment(p); }
+AstNode *parseExpression(Parser *p) { return parseAssignment(p); }
 
 // Expression statement
 // expression ";"
-AstNode* parseExpressionStatement(Parser* p) {
-	AstNode* expression = parseExpression(p);
+AstNode *parseExpressionStatement(Parser *p) {
+	AstNode *expression = parseExpression(p);
 	if (!expression) {
 		return NULL;
 	}
@@ -613,7 +676,7 @@ AstNode* parseExpressionStatement(Parser* p) {
 	}
 	advance(p);
 
-	AstNode* statement = (AstNode*)malloc(sizeof(AstNode));
+	AstNode *statement = (AstNode *)malloc(sizeof(AstNode));
 	statement->type = NODE_EXPRESSION_STATEMENT;
 	statement->data.expressionStatement.expression = expression;
 	return statement;
@@ -621,25 +684,26 @@ AstNode* parseExpressionStatement(Parser* p) {
 
 // Block statement
 // "{" statement* "}"
-AstNode* parseBlockStatement(Parser* p) {
-	if (!check(p, TOKEN_LBRACE))  // "{"
+AstNode *parseBlockStatement(Parser *p) {
+	if (!check(p, TOKEN_LBRACE)) // "{"
 		return NULL;
-	Token* t = peek(p);
+	Token *t = peek(p);
 	advance(p);
 
-	AstNode* block = astBlockCreate();
+	AstNode *block = astBlockCreate();
 	if (!block) {
 		tokenLogger(LOG_ERROR, *t, "Failed to create block\n");
 		return NULL;
 	}
 
-	AstNode* statement = NULL;
-	while (!atEnd(p) && peek(p)->type != TOKEN_RBRACE) {  // statement*
+	AstNode *statement = NULL;
+	while (!atEnd(p) && peek(p)->type != TOKEN_RBRACE) { // statement*
 		statement = parseStatement(p);
-		if (statement) astBlockPush(block, statement);
+		if (statement)
+			astBlockPush(block, statement);
 	}
 
-	if (!check(p, TOKEN_RBRACE)) {  // "}"
+	if (!check(p, TOKEN_RBRACE)) { // "}"
 		tokenLogger(LOG_ERROR, *t, "Syntax error: Unclosed block\n");
 		return NULL;
 	}
@@ -650,39 +714,43 @@ AstNode* parseBlockStatement(Parser* p) {
 
 // If statement
 // if "(" expression ")" statement [else statement]
-AstNode* parseIfStatement(Parser* p) {
-	if (!check(p, TOKEN_KEYWORD_IF))  // if
+AstNode *parseIfStatement(Parser *p) {
+	if (!check(p, TOKEN_KEYWORD_IF)) // if
 		return NULL;
-	Token* t = peek(p);
+	Token *t = peek(p);
 	advance(p);
 
-	if (!check(p, TOKEN_LPAREN)) {  // "("
+	if (!check(p, TOKEN_LPAREN)) { // "("
 		tokenLogger(LOG_ERROR, *(peek(p)), "Expected '(' after if");
 		return NULL;
 	}
 	advance(p);
 
-	AstNode* condition = parseExpression(p);  // expression
-	if (!condition) return NULL;
+	AstNode *condition = parseExpression(p); // expression
+	if (!condition)
+		return NULL;
 
-	if (!check(p, TOKEN_RPAREN)) {  // ")"
+	if (!check(p, TOKEN_RPAREN)) { // ")"
 		tokenLogger(LOG_ERROR, *(peek(p)), "Expression ')' after expression");
 		return NULL;
 	}
 	advance(p);
 
-	AstNode* thenBranch = parseStatement(p);
-	if (!thenBranch) return NULL;
+	AstNode *thenBranch = parseStatement(p);
+	if (!thenBranch)
+		return NULL;
 
-	AstNode* elseBranch = NULL;
+	AstNode *elseBranch = NULL;
 	if (check(p, TOKEN_KEYWORD_ELSE)) {
 		advance(p);
 		elseBranch = parseStatement(p);
-		if (!elseBranch) return NULL;
+		if (!elseBranch)
+			return NULL;
 	}
 
-	AstNode* node = (AstNode*)malloc(sizeof(AstNode));
-	if (!node) return NULL;
+	AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+	if (!node)
+		return NULL;
 
 	node->type = NODE_IF_STATEMENT;
 	node->token = t;
@@ -695,24 +763,37 @@ AstNode* parseIfStatement(Parser* p) {
 
 // Return statement
 // return expression? ";"
-AstNode* parseReturnStatement(Parser* p) {
-	if (!check(p, TOKEN_KEYWORD_RETURN))  // return
+AstNode *parseReturnStatement(Parser *p) {
+	if (!check(p, TOKEN_KEYWORD_RETURN)) // return
 		return NULL;
-	Token* t = peek(p);
+	Token *t = peek(p);
 	advance(p);
 
-	AstNode* expression = NULL;
+	AstNode *expression = NULL;
 	if (!check(p, TOKEN_SEMICOLON)) {
 		expression = parseExpression(p);
-		if (!expression) return NULL;
+		if (!expression)
+			return NULL;
+
+		if (!check(p, TOKEN_SEMICOLON)) { // Esperar ";"
+			tokenLogger(LOG_ERROR, *(peek(p)),
+			            "Syntax error: Expected ';' after expression");
+			return NULL;
+		}
 	} else {
-		expression = (AstNode*)malloc(sizeof(AstNode));
+		expression = (AstNode *)malloc(sizeof(AstNode));
 		expression->type = NODE_NULL;
 		expression->token = peek(p);
+
+		if (!check(p, TOKEN_SEMICOLON)) { // Esperar ";"
+			tokenLogger(LOG_ERROR, *(peek(p)),
+			            "Syntax error: Expected ';' after return");
+			return NULL;
+		}
 	}
 	advance(p);
 
-	AstNode* node = (AstNode*)malloc(sizeof(AstNode));
+	AstNode *node = (AstNode *)malloc(sizeof(AstNode));
 	node->type = NODE_RETURN_STATEMENT;
 	node->token = t;
 	node->data.returnStatement.expression = expression;
@@ -720,19 +801,81 @@ AstNode* parseReturnStatement(Parser* p) {
 	return node;
 }
 
-// Statement
-AstNode* parseStatement(Parser* p) {
-	if (atEnd(p)) return NULL;
+// Var statement
+// var identifier ["=" expression] ";"
+AstNode *parseVarStatement(Parser *p) {
+	if (!check(p, TOKEN_KEYWORD_VAR)) // var
+		return NULL;
+	Token *t = peek(p);
+	advance(p);
 
-	if (check(p, TOKEN_LBRACE))  // bloco: "{" statement* "}"
+	AstNode *identifier = parsePrimary(p); // identifier
+	if (!identifier)
+		return NULL;
+
+	if (identifier->type != NODE_IDENTIFIER) {
+		tokenLogger(LOG_ERROR, *t,
+		            "Syntax error: Expected identifier after var");
+		return NULL;
+	}
+
+	AstNode *expression = (AstNode *)malloc(sizeof(AstNode));
+	if (!expression)
+		return NULL;
+	if (check(p, TOKEN_ASSIGN)) { // Tem expressão?
+		advance(p);               // "="
+
+		expression = parseExpression(p);
+		if (!expression)
+			return NULL;
+
+		if (!check(p, TOKEN_SEMICOLON)) { // Esperar ";"
+			tokenLogger(LOG_ERROR, *(peek(p)),
+			            "Syntax error: Expected ';' after expression");
+			return NULL;
+		}
+	} else {
+		expression->type = NODE_NULL;
+		expression->token = t;
+
+		if (!check(p, TOKEN_SEMICOLON)) { // Esperar ";"
+			tokenLogger(LOG_ERROR, *(peek(p)),
+			            "Syntax error: Expected ';' after identifier");
+			return NULL;
+		}
+	}
+	advance(p);
+
+	AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+	if (!node)
+		return NULL;
+
+	node->type = NODE_VAR_STATEMENT;
+	node->token = t;
+	node->data.varStatement.identifier = identifier;
+	node->data.varStatement.expression = expression;
+
+	return node;
+}
+
+// Statement
+AstNode *parseStatement(Parser *p) {
+	if (atEnd(p))
+		return NULL;
+
+	if (check(p, TOKEN_LBRACE)) // bloco: "{" statement* "}"
 		return parseBlockStatement(p);
 
-	if (check(p, TOKEN_KEYWORD_IF))  // if: if "(" expression ")" statement
-	                                 // [else statement]
+	if (check(p, TOKEN_KEYWORD_IF)) // if: if "(" expression ")" statement
+	                                // [else statement]
 		return parseIfStatement(p);
 
-	if (check(p, TOKEN_KEYWORD_RETURN))  // return: return expression? ";"
+	if (check(p, TOKEN_KEYWORD_RETURN)) // return: return expression? ";"
 		return parseReturnStatement(p);
+
+	if (check(p,
+	          TOKEN_KEYWORD_VAR)) // var: var identifier ["=" expression] ";"
+		return parseVarStatement(p);
 
 	return parseExpressionStatement(p);
 }

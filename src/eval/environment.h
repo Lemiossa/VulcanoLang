@@ -4,20 +4,25 @@
  * Licença MIT
  */
 #pragma once
-#include "eval.h"
+#include "value.h"
+#include <stdbool.h>
+#include <stddef.h>
 
 typedef struct Object {
-	char* name;
+	char *start;
+	size_t length;
 	Value value;
 } Object;
 
 typedef struct Environment {
-	Object* objects;
+	Object *objects;
 	size_t count;
 	size_t capacity;
-	struct Environment* parent;
+	struct Environment *parent;
 } Environment;
 
-Environment* environmentCreate(size_t initial, Environment* parent);
+Environment *environmentCreate(size_t initial, Environment *parent);
 bool environmentPushObject(Environment *environment, Object object);
+Value *environmentFindObject(Environment *environment, char *start,
+                             size_t length);
 void environmentDestroy(Environment *environment);

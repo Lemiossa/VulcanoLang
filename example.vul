@@ -1,3 +1,8 @@
 # Code example
 
-return 1;
+var nome = "Matheus";
+var saudacaoPrefix = "Bem-vindo, ";
+
+var saudacao = saudacaoPrefix + nome;
+
+return saudacao;

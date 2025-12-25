@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "eval/arena.h"
+#include "eval/environment.h"
 #include "eval/eval.h"
 #include "lexer/lexer.h"
 #include "lexer/token.h"
@@ -18,25 +19,25 @@
 #include "util.h"
 
 // Func principal
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 	if (argc < 2) {
 		logger(LOG_ERROR, "File is required\n");
 		logger(LOG_INFO, "Usage: %s <FILE>\n", argv[0]);
 		return 1;
 	}
 
-	char* filename = argv[1];
-	FILE* f = fopen(filename, "r");
+	char *filename = argv[1];
+	FILE *f = fopen(filename, "r");
 
-	if (!f) {  // Ver se falhou ao abrir o arquivo
+	if (!f) { // Ver se falhou ao abrir o arquivo
 		logger(LOG_ERROR, "Failed to open %s: %s\n", filename, strerror(errno));
 		return 1;
 	}
 
 	long filesize = fsize(f);
 
-	char* content = (char*)malloc(filesize);
-	if (!content) {  // Ver se falhou ao alocar memoria para arquivo
+	char *content = (char *)malloc(filesize);
+	if (!content) { // Ver se falhou ao alocar memoria para arquivo
 		logger(LOG_ERROR, "Failed to alloc memory for the file\n");
 		fclose(f);
 		return 1;
@@ -50,7 +51,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	Lexer* lexer = lexerCreate(content, filesize);
+	Lexer *lexer = lexerCreate(content, filesize);
 	if (!lexerValidate(lexer)) {
 		logger(LOG_ERROR, "Failed to create lexer\n");
 		free(content);
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
 	}
 	TokenArray tokens = lexerTokenize(lexer);
 
-	Parser* parser = parserCreate(tokens);
+	Parser *parser = parserCreate(tokens);
 	if (!parserValidate(parser)) {
 		logger(LOG_ERROR, "Failed to create parser\n");
 		lexerDestroy(lexer);
@@ -68,7 +69,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	AstNode* root = parserParse(parser);
+	AstNode *root = parserParse(parser);
 	if (!root) {
 		logger(LOG_ERROR, "Failed to parse\n");
 		parserDestroy(parser);
@@ -78,7 +79,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	Arena* arena = arenaCreate(16 * 1024);
+	Arena *arena = arenaCreate(16 * 1024);
 	if (!arena) {
 		logger(LOG_ERROR, "Failed to create arena allocator\n");
 		parserDestroy(parser);
@@ -88,11 +89,23 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+	Environment *environment = environmentCreate(32, NULL);
+	if (!environment) {
+		logger(LOG_ERROR, "Failed to create environment\n");
+		arenaDestroy(arena);
+		parserDestroy(parser);
+		lexerDestroy(lexer);
+		free(content);
+		fclose(f);
+		return 1;
+	}
+
 	astDump(root, 0);
 
-	Value ret = eval(root, arena);
+	Value ret = eval(root, arena, environment);
 	printValue(ret);
 
+	environmentDestroy(environment);
 	arenaDestroy(arena);
 	astDestroy(root);
 	tokenDestroy(&tokens);

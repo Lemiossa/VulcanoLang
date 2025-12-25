@@ -15,7 +15,7 @@
 #include "util.h"
 
 typedef struct {
-	const char* name;
+	const char *name;
 	TokenType type;
 } Keyword;
 
@@ -31,6 +31,7 @@ Keyword keywords[] = {
     {"if", TOKEN_KEYWORD_IF},
     {"else", TOKEN_KEYWORD_ELSE},
 
+    {"var", TOKEN_KEYWORD_VAR},
     {"fn", TOKEN_KEYWORD_FN},
     {"return", TOKEN_KEYWORD_RETURN},
 
@@ -38,11 +39,11 @@ Keyword keywords[] = {
     {"or", TOKEN_OR},
     {"not", TOKEN_NOT},
 
-    {NULL, 0}  // Para aqui
+    {NULL, 0} // Para aqui
 };
 
 // Valída um lexer
-bool lexerValidate(Lexer* l) {
+bool lexerValidate(Lexer *l) {
 	if (!l) {
 		logger(LOG_ERROR, "Lexer error: lexer is NULL\n");
 		return false;
@@ -62,15 +63,17 @@ bool lexerValidate(Lexer* l) {
 }
 
 // Retorna true se esta no fim do conteúdo
-static bool eof(Lexer* l) {
-	if (!lexerValidate(l)) return true;
+static bool eof(Lexer *l) {
+	if (!lexerValidate(l))
+		return true;
 
 	return l->pos >= l->contentSize;
 }
 
 // Pula enquanto não tem um caractere
-static void skipUntil(Lexer* l, char c) {
-	if (!lexerValidate(l)) return;
+static void skipUntil(Lexer *l, char c) {
+	if (!lexerValidate(l))
+		return;
 
 	while (!eof(l) && l->content[l->pos] != c) {
 		if (l->content[l->pos] == '\n') {
@@ -84,8 +87,9 @@ static void skipUntil(Lexer* l, char c) {
 }
 
 // Retorna o caracere atual do content do lexer
-static char peek(Lexer* l) {
-	if (eof(l)) return 0;
+static char peek(Lexer *l) {
+	if (eof(l))
+		return 0;
 	return l->content[l->pos];
 }
 
@@ -96,14 +100,16 @@ static char peek(Lexer* l) {
 //}
 
 // Retorna o proximo caractere sem incrementar pos
-static char next(Lexer* l) {
-	if (eof(l)) return 0;
-	if (l->pos + 1 >= l->contentSize) return 0;
+static char next(Lexer *l) {
+	if (eof(l))
+		return 0;
+	if (l->pos + 1 >= l->contentSize)
+		return 0;
 	return l->content[l->pos + 1];
 }
 
 // Cria um lexer
-Lexer* lexerCreate(const char* content, size_t contentSize) {
+Lexer *lexerCreate(const char *content, size_t contentSize) {
 	if (!content) {
 		logger(LOG_ERROR, "Lexer error: Content is NULL\n");
 		return NULL;
@@ -114,8 +120,9 @@ Lexer* lexerCreate(const char* content, size_t contentSize) {
 		return NULL;
 	}
 
-	Lexer* l = (Lexer*)malloc(sizeof(Lexer));
-	if (!l) return NULL;
+	Lexer *l = (Lexer *)malloc(sizeof(Lexer));
+	if (!l)
+		return NULL;
 
 	l->content = content;
 	l->contentSize = contentSize;
@@ -128,9 +135,10 @@ Lexer* lexerCreate(const char* content, size_t contentSize) {
 
 // Tokeniza um lexer
 // Retorna um TokenArray
-TokenArray lexerTokenize(Lexer* l) {
+TokenArray lexerTokenize(Lexer *l) {
 	TokenArray tokens = {0};
-	if (!lexerValidate(l)) return tokens;
+	if (!lexerValidate(l))
+		return tokens;
 	tokenInit(&tokens);
 
 	// Parte 1: tudo menos keywords
@@ -154,7 +162,7 @@ TokenArray lexerTokenize(Lexer* l) {
 
 		// Comentarios
 		if (c == '#') {
-			l->pos++;  // Pular #
+			l->pos++; // Pular #
 			skipUntil(l, '\n');
 
 			// Aqui só pode ser \n ou \0
@@ -171,8 +179,8 @@ TokenArray lexerTokenize(Lexer* l) {
 		// Números
 		if (isdigit(c)) {
 			// Usar strtol para descobrir o final do número
-			const char* start = &l->content[l->pos];
-			char* integerEnd;
+			const char *start = &l->content[l->pos];
+			char *integerEnd;
 
 			strtoll(start, &integerEnd, 0);
 
@@ -192,7 +200,7 @@ TokenArray lexerTokenize(Lexer* l) {
 				continue;
 			}
 			// Se chegou aqui provavelmente é float/double
-			char* floatingEnd;
+			char *floatingEnd;
 
 			strtod(start, &floatingEnd);
 
@@ -217,13 +225,13 @@ TokenArray lexerTokenize(Lexer* l) {
 			size_t startColumn = l->column;
 			l->pos++;
 			l->column++;
-			const char* start = &l->content[l->pos];
+			const char *start = &l->content[l->pos];
 
 			skipUntil(l, c);
 
 			// Aqui só pode ser '|" ou \0
 			if (l->content[l->pos] == c) {
-				const char* end = &l->content[l->pos];
+				const char *end = &l->content[l->pos];
 
 				Token t;
 				t.type = TOKEN_STRING;
@@ -247,8 +255,8 @@ TokenArray lexerTokenize(Lexer* l) {
 		// Identificadores
 		if (isalpha(c) || c == '_') {
 			size_t startColumn = l->column;
-			const char* start = &l->content[l->pos];
-			l->pos++;  // Pular char
+			const char *start = &l->content[l->pos];
+			l->pos++; // Pular char
 			l->column++;
 
 			// Incrementar pos e column enquanto caractere for
@@ -257,7 +265,7 @@ TokenArray lexerTokenize(Lexer* l) {
 				l->pos++;
 				l->column++;
 			}
-			const char* end = &l->content[l->pos];
+			const char *end = &l->content[l->pos];
 
 			// Aqui só pode ser não alfanumérico|_ ou \0
 			if (!isalnum(peek(l)) && peek(l) != '_') {
@@ -284,168 +292,168 @@ TokenArray lexerTokenize(Lexer* l) {
 		t.column = l->column;
 
 		switch (c) {
-			case '+': {
-				t.type = TOKEN_PLUS;
-			} break;
+		case '+': {
+			t.type = TOKEN_PLUS;
+		} break;
 
-			case '-': {
-				if (next(l) == '>') {
-					t.type = TOKEN_ARROW;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else {
-					t.type = TOKEN_MINUS;
-				}
-			} break;
-
-			case '*': {
-				t.type = TOKEN_STAR;
-			} break;
-
-			case '/': {
-				t.type = TOKEN_SLASH;
-			} break;
-
-			case '%': {
-				t.type = TOKEN_PERCENT;
-			} break;
-
-			case '=': {
-				if (next(l) == '=') {
-					t.type = TOKEN_EQ;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else {
-					t.type = TOKEN_ASSIGN;
-				}
-			} break;
-
-			case '!': {
-				if (next(l) == '=') {
-					t.type = TOKEN_NEQ;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else {
-					t.type = TOKEN_NOT;
-				}
-			} break;
-
-			case '<': {
-				if (next(l) == '=') {
-					t.type = TOKEN_LTE;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else if (next(l) == '<') {
-					t.type = TOKEN_SHIFT_LEFT;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else {
-					t.type = TOKEN_LT;
-				}
-			} break;
-
-			case '>': {
-				if (next(l) == '=') {
-					t.type = TOKEN_GTE;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else if (next(l) == '>') {
-					t.type = TOKEN_SHIFT_RIGHT;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else {
-					t.type = TOKEN_GT;
-				}
-			} break;
-
-			case '&': {
-				if (next(l) == '&') {
-					t.type = TOKEN_AND;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else {
-					t.type = TOKEN_BIT_AND;
-				}
-			} break;
-
-			case '|': {
-				if (next(l) == '|') {
-					t.type = TOKEN_OR;
-					t.length = 2;
-					l->pos++;
-					l->column++;
-				} else {
-					t.type = TOKEN_BIT_OR;
-				}
-			} break;
-
-			case '^': {
-				t.type = TOKEN_BIT_XOR;
-			} break;
-
-			case '~': {
-				t.type = TOKEN_BIT_NOT;
-			} break;
-
-			case '(': {
-				t.type = TOKEN_LPAREN;
-			} break;
-
-			case ')': {
-				t.type = TOKEN_RPAREN;
-			} break;
-
-			case '{': {
-				t.type = TOKEN_LBRACE;
-			} break;
-
-			case '}': {
-				t.type = TOKEN_RBRACE;
-			} break;
-
-			case '[': {
-				t.type = TOKEN_LBRACKET;
-			} break;
-
-			case ']': {
-				t.type = TOKEN_RBRACKET;
-			} break;
-
-			case ';': {
-				t.type = TOKEN_SEMICOLON;
-			} break;
-
-			case ',': {
-				t.type = TOKEN_COMMA;
-			} break;
-
-			case '.': {
-				t.type = TOKEN_DOT;
-			} break;
-
-			case ':': {
-				t.type = TOKEN_COLON;
-			} break;
-
-			case '?': {
-				t.type = TOKEN_QUESTION;
-			} break;
-
-			default: {
-				logger(LOG_ERROR, "Unknown character '%c' at %zu:%zu\n", c,
-				       l->line, l->column);
+		case '-': {
+			if (next(l) == '>') {
+				t.type = TOKEN_ARROW;
+				t.length = 2;
 				l->pos++;
 				l->column++;
-				continue;
+			} else {
+				t.type = TOKEN_MINUS;
 			}
+		} break;
+
+		case '*': {
+			t.type = TOKEN_STAR;
+		} break;
+
+		case '/': {
+			t.type = TOKEN_SLASH;
+		} break;
+
+		case '%': {
+			t.type = TOKEN_PERCENT;
+		} break;
+
+		case '=': {
+			if (next(l) == '=') {
+				t.type = TOKEN_EQ;
+				t.length = 2;
+				l->pos++;
+				l->column++;
+			} else {
+				t.type = TOKEN_ASSIGN;
+			}
+		} break;
+
+		case '!': {
+			if (next(l) == '=') {
+				t.type = TOKEN_NEQ;
+				t.length = 2;
+				l->pos++;
+				l->column++;
+			} else {
+				t.type = TOKEN_NOT;
+			}
+		} break;
+
+		case '<': {
+			if (next(l) == '=') {
+				t.type = TOKEN_LTE;
+				t.length = 2;
+				l->pos++;
+				l->column++;
+			} else if (next(l) == '<') {
+				t.type = TOKEN_SHIFT_LEFT;
+				t.length = 2;
+				l->pos++;
+				l->column++;
+			} else {
+				t.type = TOKEN_LT;
+			}
+		} break;
+
+		case '>': {
+			if (next(l) == '=') {
+				t.type = TOKEN_GTE;
+				t.length = 2;
+				l->pos++;
+				l->column++;
+			} else if (next(l) == '>') {
+				t.type = TOKEN_SHIFT_RIGHT;
+				t.length = 2;
+				l->pos++;
+				l->column++;
+			} else {
+				t.type = TOKEN_GT;
+			}
+		} break;
+
+		case '&': {
+			if (next(l) == '&') {
+				t.type = TOKEN_AND;
+				t.length = 2;
+				l->pos++;
+				l->column++;
+			} else {
+				t.type = TOKEN_BIT_AND;
+			}
+		} break;
+
+		case '|': {
+			if (next(l) == '|') {
+				t.type = TOKEN_OR;
+				t.length = 2;
+				l->pos++;
+				l->column++;
+			} else {
+				t.type = TOKEN_BIT_OR;
+			}
+		} break;
+
+		case '^': {
+			t.type = TOKEN_BIT_XOR;
+		} break;
+
+		case '~': {
+			t.type = TOKEN_BIT_NOT;
+		} break;
+
+		case '(': {
+			t.type = TOKEN_LPAREN;
+		} break;
+
+		case ')': {
+			t.type = TOKEN_RPAREN;
+		} break;
+
+		case '{': {
+			t.type = TOKEN_LBRACE;
+		} break;
+
+		case '}': {
+			t.type = TOKEN_RBRACE;
+		} break;
+
+		case '[': {
+			t.type = TOKEN_LBRACKET;
+		} break;
+
+		case ']': {
+			t.type = TOKEN_RBRACKET;
+		} break;
+
+		case ';': {
+			t.type = TOKEN_SEMICOLON;
+		} break;
+
+		case ',': {
+			t.type = TOKEN_COMMA;
+		} break;
+
+		case '.': {
+			t.type = TOKEN_DOT;
+		} break;
+
+		case ':': {
+			t.type = TOKEN_COLON;
+		} break;
+
+		case '?': {
+			t.type = TOKEN_QUESTION;
+		} break;
+
+		default: {
+			logger(LOG_ERROR, "Unknown character '%c' at %zu:%zu\n", c, l->line,
+			       l->column);
+			l->pos++;
+			l->column++;
+			continue;
+		}
 		}
 
 		tokenPush(&tokens, t);
@@ -455,10 +463,11 @@ TokenArray lexerTokenize(Lexer* l) {
 
 	// Parte 2: transformar identifiers em keywords
 	for (size_t i = 0; i < tokens.count; i++) {
-		Token* t = &tokens.data[i];
+		Token *t = &tokens.data[i];
 		for (size_t j = 0; keywords[j].name; j++) {
 			size_t keywordlen = strlen(keywords[j].name);
-			if (t->length != keywordlen) continue;
+			if (t->length != keywordlen)
+				continue;
 
 			if (strncmp(t->start, keywords[j].name, keywordlen) == 0) {
 				t->type = keywords[j].type;
@@ -470,8 +479,9 @@ TokenArray lexerTokenize(Lexer* l) {
 }
 
 // Destrói um lexer
-void lexerDestroy(Lexer* l) {
-	if (!lexerValidate(l)) return;
+void lexerDestroy(Lexer *l) {
+	if (!lexerValidate(l))
+		return;
 
 	free(l);
 }
