@@ -11,7 +11,7 @@ BINDIR :=$(BUILDDIR)/bin
 VERSION := 0.1
 
 CC ?= gcc
-DEFS := -DVERSION=$(VERSION)
+DEFS := -DVERSION_STRING=\"$(VERSION)\"
 LIBS := -lm
 FORMATSTYLE := "{BasedOnStyle: LLVM, UseTab: ForIndentation, IndentWidth: 4, TabWidth: 4}"
 

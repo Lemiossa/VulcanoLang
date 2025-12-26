@@ -18,12 +18,25 @@
 #include "parser/parser.h"
 #include "util.h"
 
+// Imprime help
+void help(char *argv0) {
+	logger(LOG_INFO, "Usage: %s <FILE | commands>\n", argv0);
+	logger(LOG_INFO, "Commands: help, version\n", argv0);
+}
 // Func principal
 int main(int argc, char **argv) {
 	if (argc < 2) {
 		logger(LOG_ERROR, "File is required\n");
-		logger(LOG_INFO, "Usage: %s <FILE>\n", argv[0]);
+		
 		return 1;
+	}
+
+	if (strcmp(argv[1], "help") == 0) {
+		help(argv[0]);
+		exit(0);
+	} else if (strcmp(argv[1], "version") == 0) {
+		printf("%s v%s\n", argv[0], VERSION_STRING);
+		exit(0);
 	}
 
 	char *filename = argv[1];
