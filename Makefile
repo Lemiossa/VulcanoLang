@@ -60,7 +60,7 @@ format:
 
 install:
 	@echo "  INSTALL   $(PREFIX)/bin/$(notdir $(TARGET))"
-	@mkdir -p $(PREFIX)/bin
+	@mkdir -p $(DESTDIR)$(PREFIX)/bin
 	@install -m 755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/vul
 
 $(BUILDDIR)/.debug: 
