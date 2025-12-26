@@ -61,7 +61,7 @@ format:
 install:
 	@echo "  INSTALL   $(PREFIX)/bin/$(notdir $(TARGET))"
 	@mkdir -p $(PREFIX)/bin
-	@cp $(TARGET) $(PREFIX)/bin
+	@install -m 755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/vul
 
 $(BUILDDIR)/.debug: 
 	@echo "  DEBUG     BUILD"
