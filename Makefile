@@ -8,7 +8,7 @@ OBJDIR := $(BUILDDIR)/obj
 DEPDIR := $(BUILDDIR)/dep
 BINDIR :=$(BUILDDIR)/bin
 
-VERSION := 0.1
+VERSION := 0.2
 
 CC ?= gcc
 DEFS := -DVERSION_STRING=\"$(VERSION)\"
